@@ -190,7 +190,7 @@ tbody tr:last-child{border-bottom:none}
   <div class="vi" onclick="event.stopPropagation()">
     <button class="vc" onclick="closeViewer()">✕</button>
     <img id="vImg" style="max-width:90vw;max-height:88vh;border-radius:10px;display:none;object-fit:contain" alt=""/>
-    <iframe id="vPdf" style="width:88vw;height:86vh;border-radius:10px;display:none;border:none"></iframe>
+    <div id="vPdf" style="width:88vw;height:86vh;border-radius:10px;display:none"></div>
   </div>
 </div>
 
@@ -299,7 +299,7 @@ tbody tr:last-child{border-bottom:none}
         <div style="font-weight:800;font-size:14px;color:#b91c1c">💸 รายจ่าย</div>
         <div id="eSum" style="margin-left:auto;font-size:12px"></div>
       </div>
-      <div class="tw"><table><thead><tr><th>วันที่</th><th>รายการ</th><th>หมวดหมู่</th><th>หมายเหตุ</th><th>ใบเสร็จ</th><th style="text-align:right">จำนวนเงิน</th><th style="text-align:center">จัดการ</th></tr></thead><tbody id="expTb"></tbody></table></div>
+      <div class="tw"><table><thead><tr><th>วันที่</th><th>รายการ</th><th>หมวดหมู่</th><th style="text-align:right">จำนวน</th><th style="text-align:right">ราคา/หน่วย</th><th>หมายเหตุ</th><th>ใบเสร็จ</th><th style="text-align:right">รวมเป็นเงิน</th><th style="text-align:center">จัดการ</th></tr></thead><tbody id="expTb"></tbody></table></div>
       <div id="expEmpty" style="display:none;text-align:center;padding:44px;color:var(--mu)"><div style="font-size:36px;margin-bottom:8px">📂</div><div style="font-weight:700">ไม่พบรายการรายจ่าย</div></div>
     </div>
   </section>
@@ -764,6 +764,8 @@ function renderExpense() {
     return '<tr class="fr"><td style="white-space:nowrap">'+fmtD(it.date)+'</td>'+
       '<td><div style="font-weight:600">'+it.desc+'</div></td>'+
       '<td><span style="font-size:10px;padding:2px 6px;background:#fee2e2;border-radius:5px;color:#b91c1c">'+it.category+'</span></td>'+
+      '<td style="text-align:right;color:var(--mu)">'+(it.qty||'–')+'</td>'+
+      '<td style="text-align:right;color:var(--mu)">'+(it.unitPrice?fmt(it.unitPrice):'–')+'</td>'+
       '<td style="font-size:11px;color:var(--mu)">'+(it.note||'–')+'</td>'+
       '<td>'+mkFBtns(it.id,it.files)+'</td>'+
       '<td style="text-align:right;font-weight:800;color:#b91c1c">-'+fmt(it.amount)+'</td>'+
@@ -1072,10 +1074,17 @@ function buildForm(type) {
       '</div>'+
       '<div class="g2 mb3">'+
       '<div><label class="lbl">รับสุทธิ (฿) *</label><input type="number" class="inp" id="mAmt" placeholder="0.00" step="0.01" min="0"></div>'+
-      '<div><label class="lbl">ระยะเวลา (วัน)</label><input type="number" class="inp" id="mDur" placeholder="0" min="0"></div>'+
+      '<div><label class="lbl">ระยะเวลา (วัน) <span style="font-size:9px;color:var(--g2)">(อัตโนมัติ)</span></label><input type="number" class="inp" id="mDur" placeholder="0" min="0"></div>'+
       '</div>';
   } else {
-    dynHtml = '<div class="mb3"><label class="lbl">จำนวนเงิน (฿) *</label><input type="number" class="inp" id="mAmt" placeholder="0.00" step="0.01" min="0"></div>';
+    var expDynHtml =
+      '<div class="g3 mb3" id="expQtyRow">'+
+      '<div><label class="lbl">จำนวน</label><input type="number" class="inp" id="mQty" placeholder="1" min="0" step="any" oninput="autoCalcExp()"></div>'+
+      '<div><label class="lbl">ราคาต่อหน่วย (฿)</label><input type="number" class="inp" id="mUnitPr" placeholder="0.00" step="0.01" min="0" oninput="autoCalcExp()"></div>'+
+      '<div><label class="lbl">รวมเป็นเงิน (฿)</label><input type="number" class="inp" id="mSubtotal" placeholder="0.00" readonly style="background:var(--bg3);font-weight:700;color:var(--re2)"></div>'+
+      '</div>'+
+      '<div class="mb3"><label class="lbl">จำนวนเงิน (฿) *</label><input type="number" class="inp" id="mAmt" placeholder="0.00" step="0.01" min="0"></div>';
+    dynHtml = expDynHtml;
   }
   document.getElementById('mTitle').textContent = editId ? 'แก้ไขรายการ' : 'เพิ่มรายการ';
   document.getElementById('mSub').textContent   = 'เลือกประเภทและกรอกข้อมูล';
@@ -1090,7 +1099,7 @@ function buildForm(type) {
     '<div><label class="lbl">หมวดหมู่ *</label><select class="inp" id="mCat">'+catOpts+'</select></div>'+
     '</div>'+
     '<div class="mb3"><label class="lbl">รายการ / รายละเอียด *</label>'+
-    '<input type="text" class="inp" id="mDesc" placeholder="'+(type==='income'?'เช่น ปาล์มทะลาย':'เช่น ค่าปุ๋ย, ค่าน้ำมัน...')+'"></div>'+
+    '<input type="text" class="inp" id="mDesc" placeholder="'+(type==='income'?'เช่น ปาล์มทะลาย':'เช่น ค่าปุ๋ย, ค่าน้ำมัน...')+'" value="'+(type==='income'&&!editId?'ปาล์มทะลาย':'')+'"></div>'+
     dynHtml+
     '<div class="mb3"><label class="lbl">หมายเหตุ</label><input type="text" class="inp" id="mNote" placeholder="หมายเหตุเพิ่มเติม"></div>'+
     '<div class="mb3">'+
@@ -1105,6 +1114,21 @@ function buildForm(type) {
     '<button class="btn btn-g" onclick="saveItem()" type="button">💾 บันทึก</button>'+
     '</div>';
   renderImgGrid();
+  /* Auto-fill duration for new income entries */
+  if (type === 'income' && !editId) {
+    var incItems = items.filter(function(i){ return i.type === 'income'; });
+    if (incItems.length > 0) {
+      incItems.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+      var lastDate = new Date(incItems[0].date);
+      var today2 = new Date();
+      today2.setHours(0,0,0,0);
+      var diff = Math.round((today2 - lastDate) / (1000*60*60*24));
+      if (diff > 0) {
+        var durEl = document.getElementById('mDur');
+        if (durEl) durEl.value = diff;
+      }
+    }
+  }
 }
 
 function switchType(t) {
@@ -1114,6 +1138,10 @@ function switchType(t) {
   var cats = t === 'income' ? INC_CATS : EXP_CATS;
   document.getElementById('mCat').innerHTML = cats.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join('');
   document.getElementById('mDesc').placeholder = t === 'income' ? 'เช่น ปาล์มทะลาย' : 'เช่น ค่าปุ๋ย, ค่าน้ำมัน...';
+  /* Set default desc for new income */
+  var descEl = document.getElementById('mDesc');
+  if (t === 'income' && !editId && descEl && !descEl.value) descEl.value = 'ปาล์มทะลาย';
+  if (t === 'expense' && !editId && descEl && descEl.value === 'ปาล์มทะลาย') descEl.value = '';
   /* swap dynamic fields */
   var dynHtml = '';
   if (t === 'income') {
@@ -1128,10 +1156,15 @@ function switchType(t) {
       '</div>'+
       '<div class="g2 mb3" id="dynF3">'+
       '<div><label class="lbl">รับสุทธิ (฿) *</label><input type="number" class="inp" id="mAmt" placeholder="0.00" step="0.01" min="0"></div>'+
-      '<div><label class="lbl">ระยะเวลา (วัน)</label><input type="number" class="inp" id="mDur" placeholder="0" min="0"></div>'+
+      '<div><label class="lbl">ระยะเวลา (วัน) <span style="font-size:9px;color:var(--g2)">(อัตโนมัติ)</span></label><input type="number" class="inp" id="mDur" placeholder="0" min="0"></div>'+
       '</div>';
   } else {
-    dynHtml = '<div class="mb3" id="dynF1"><label class="lbl">จำนวนเงิน (฿) *</label><input type="number" class="inp" id="mAmt" placeholder="0.00" step="0.01" min="0"></div>';
+    dynHtml = '<div class="g3 mb3" id="dynF1">'+
+      '<div><label class="lbl">จำนวน</label><input type="number" class="inp" id="mQty" placeholder="1" min="0" step="any" oninput="autoCalcExp()"></div>'+
+      '<div><label class="lbl">ราคาต่อหน่วย (฿)</label><input type="number" class="inp" id="mUnitPr" placeholder="0.00" step="0.01" min="0" oninput="autoCalcExp()"></div>'+
+      '<div><label class="lbl">รวมเป็นเงิน (฿)</label><input type="number" class="inp" id="mSubtotal" placeholder="0.00" readonly style="background:var(--bg3);font-weight:700;color:var(--re2)"></div>'+
+      '</div>'+
+      '<div class="mb3" id="dynF2"><label class="lbl">จำนวนเงิน (฿) *</label><input type="number" class="inp" id="mAmt" placeholder="0.00" step="0.01" min="0"></div>';
   }
   /* inject before note field */
   var noteDiv = document.getElementById('mNote');
@@ -1142,6 +1175,17 @@ function switchType(t) {
     var tmp = document.createElement('div');
     tmp.innerHTML = dynHtml;
     while(tmp.firstChild) parent.insertBefore(tmp.firstChild, noteDiv.parentNode);
+    /* Auto-fill duration when switching to income for new entries */
+    if (t === 'income' && !editId) {
+      var incItems2 = items.filter(function(i){ return i.type === 'income'; });
+      if (incItems2.length > 0) {
+        incItems2.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+        var lastDate2 = new Date(incItems2[0].date);
+        var today3 = new Date(); today3.setHours(0,0,0,0);
+        var diff2 = Math.round((today3 - lastDate2) / (1000*60*60*24));
+        if (diff2 > 0) { var durEl2 = document.getElementById('mDur'); if (durEl2) durEl2.value = diff2; }
+      }
+    }
   }
 }
 
@@ -1156,15 +1200,21 @@ function autoCalc() {
   if (document.getElementById('mAmt') && gross > 0) document.getElementById('mAmt').value = net.toFixed(2);
 }
 
-/* =====================================================
-   IMAGE GRID
-   ===================================================== */
+function autoCalcExp() {
+  var qty = parseFloat((document.getElementById('mQty')||{}).value) || 0;
+  var upr = parseFloat((document.getElementById('mUnitPr')||{}).value) || 0;
+  var sub = Math.round(qty * upr * 100) / 100;
+  if (document.getElementById('mSubtotal')) document.getElementById('mSubtotal').value = sub > 0 ? sub.toFixed(2) : '';
+  if (document.getElementById('mAmt') && sub > 0) document.getElementById('mAmt').value = sub.toFixed(2);
+}
+
+
 function renderImgGrid() {
   var g = document.getElementById('imgGrid'); if (!g) return;
   var h = '';
   pFiles.forEach(function(f, i) {
     var isImg = f.type.startsWith('image/');
-    h += '<div class="ith" onclick="'+(isImg?'viewPF('+i+')':'')+'">'
+    h += '<div class="ith" onclick="viewPF('+i+')" style="cursor:pointer">'
        + (isImg ? '<img src="'+f.dataUrl+'" alt="">' : '<div class="pdf-c">📄<span>'+f.name.substr(0,8)+'</span></div>')
        + '<button class="dx" onclick="event.stopPropagation();rmPF('+i+')">✕</button>'
        + '<div class="fn">'+f.name+'</div></div>';
@@ -1215,6 +1265,14 @@ function editItem(id) {
       sv('mLab',   it.labor||'');
       sv('mDur',   it.duration||'');
     }
+    if (it.type === 'expense') {
+      sv('mQty',    it.qty||'');
+      sv('mUnitPr', it.unitPrice||'');
+      if (it.qty && it.unitPrice) {
+        var sub2 = Math.round(it.qty * it.unitPrice * 100)/100;
+        sv('mSubtotal', sub2.toFixed(2));
+      }
+    }
     var catEl = document.getElementById('mCat'); if(catEl) catEl.value = it.category;
     renderImgGrid();
   }, 50);
@@ -1232,11 +1290,14 @@ function saveItem() {
   var note  = ((document.getElementById('mNote')||{}).value || '').trim();
   var wt    = parseFloat((document.getElementById('mWt')||{}).value)    || 0;
   var pr    = parseFloat((document.getElementById('mPr')||{}).value)    || 0;
+  var qty   = parseFloat((document.getElementById('mQty')||{}).value)   || 0;
+  var upr   = parseFloat((document.getElementById('mUnitPr')||{}).value)|| 0;
   var gross = mType==='income' ? (parseFloat((document.getElementById('mGross')||{}).value)||amount) : amount;
   var labor = mType==='income' ? Math.round(wt*LABOR_RATE*100)/100 : 0;
   var dur   = parseInt((document.getElementById('mDur')||{}).value)     || 0;
   var data  = { date:date, desc:desc, type:mType, category:cat, amount:amount,
     weight:wt, price:pr, grossAmount:gross, labor:labor, duration:dur,
+    qty:qty, unitPrice:upr,
     note:note, files:pFiles.map(function(f){return Object.assign({},f);}) };
   if (editId) {
     for (var k=0; k<items.length; k++) { if(items[k].id===editId){ items[k]=Object.assign({id:editId},data); break; } }
@@ -1263,14 +1324,34 @@ function openViewer(mode, url) {
   var img = document.getElementById('vImg');
   var pdf = document.getElementById('vPdf');
   img.style.display = 'none'; pdf.style.display = 'none';
-  if (mode === 'img') { img.src = url; img.style.display = 'block'; }
-  else                { pdf.src = url; pdf.style.display = 'block'; }
+  if (mode === 'img') {
+    img.src = url;
+    img.style.display = 'block';
+  } else {
+    /* PDF: try <object> first (works on most devices), fallback link if blocked */
+    pdf.innerHTML = '';
+    /* Try native embed */
+    var obj = document.createElement('object');
+    obj.data = url;
+    obj.type = 'application/pdf';
+    obj.style.cssText = 'width:88vw;height:86vh;border-radius:10px;border:none';
+    /* Fallback for iOS/mobile that can't embed PDF */
+    var fb = document.createElement('div');
+    fb.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;height:100%';
+    fb.innerHTML = '<div style="font-size:48px">📄</div><div style="color:#fff;font-weight:700;font-size:15px">ไฟล์ PDF</div>'+
+      '<a href="'+url+'" download="document.pdf" style="background:#2563eb;color:#fff;padding:10px 22px;border-radius:10px;font-weight:800;font-size:14px;text-decoration:none">⬇️ ดาวน์โหลด PDF</a>'+
+      '<div style="color:rgba(255,255,255,.5);font-size:11px">กดดาวน์โหลดเพื่อเปิดดูบนมือถือ</div>';
+    obj.appendChild(fb);
+    pdf.appendChild(obj);
+    pdf.style.display = 'block';
+  }
   bg.classList.add('open');
 }
 function closeViewer() {
   document.getElementById('vbg').classList.remove('open');
   document.getElementById('vImg').src = '';
-  document.getElementById('vPdf').src = '';
+  document.getElementById('vPdf').innerHTML = '';
+  document.getElementById('vPdf').style.display = 'none';
 }
 
 /* =====================================================
