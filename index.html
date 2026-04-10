@@ -210,6 +210,9 @@ tbody tr:last-child{border-bottom:none}
       <span style="color:rgba(255,255,255,.5);font-size:11px">ระบบออนไลน์</span>
       <span id="icount" style="margin-left:auto;color:rgba(255,255,255,.3);font-size:10px">–</span>
     </div>
+    <div id="syncStatus" style="margin-top:7px;padding:5px 10px;background:rgba(255,255,255,.04);border-radius:7px;text-align:center">
+      <span style="color:rgba(255,255,255,.3);font-size:11px">💾 โหมดโลคัล</span>
+    </div>
   </div>
   <nav class="sb-nav">
     <div class="slbl">เมนูหลัก</div>
@@ -221,7 +224,7 @@ tbody tr:last-child{border-bottom:none}
     <div class="nav" id="nav-charts" onclick="goSec('charts')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 16 4-4 4 4 4-8"/></svg>กราฟและสถิติ</div>
     <div class="nav" id="nav-summary" onclick="goSec('summary')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>สรุปรายปี</div>
     <div class="slbl" style="margin-top:6px">เครื่องมือ</div>
-    <div class="nav" id="nav-github" onclick="goSec('github')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>คู่มือขึ้น GitHub</div>
+    <div class="nav" id="nav-github" onclick="goSec('github')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Sync & GitHub</div>
     <div style="margin:10px 8px 0;padding:10px;background:rgba(30,64,175,.18);border-radius:9px;border:1px solid rgba(59,130,246,.25)">
       <div style="font-size:9px;font-weight:800;color:rgba(255,255,255,.35);margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">📁 Google Drive</div>
       <a href="https://drive.google.com/drive/folders/1Hc2zBjVdIFrwDLImFrdwUYTYoWrt23CS?usp=drive_link" target="_blank" style="display:flex;align-items:center;gap:5px;color:#90caf9;font-size:11.5px;font-weight:600">
@@ -360,8 +363,68 @@ tbody tr:last-child{border-bottom:none}
   <section class="sec" id="github">
     <div style="max-width:800px">
       <div class="gc">
-        <div style="font-size:20px;font-weight:900;margin-bottom:5px">🐙 คู่มือขึ้น GitHub Pages ทีละขั้น</div>
-        <div style="font-size:13px;color:var(--tx2)">ใช้ได้ทั้ง <strong>มือถือ</strong> และ <strong>คอม</strong> — ฟรี 100% ไม่มีค่าใช้จ่าย</div>
+        <div style="font-size:20px;font-weight:900;margin-bottom:5px">☁️ ตั้งค่า Sync ข้ามอุปกรณ์ + คู่มือขึ้น GitHub Pages</div>
+        <div style="font-size:13px;color:var(--tx2)">ใช้ <strong>Google Apps Script (ฟรี)</strong> เพื่อเก็บข้อมูลบน Google Sheet — sync ได้ทุกอุปกรณ์</div>
+      </div>
+
+      <!-- PART 0: GAS Setup -->
+      <div class="card" style="padding:20px;margin-bottom:14px;border:2px solid #22c55e">
+        <div style="font-weight:900;font-size:15px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--bd)">🔑 ส่วนที่ 0 — ตั้งค่า Google Apps Script (sync ข้ามอุปกรณ์)</div>
+
+        <div class="ds"><div class="sn">1</div><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">เปิด Google Apps Script</div><div style="font-size:12.5px;color:var(--mu)">ไปที่ <a href="https://script.google.com" target="_blank" style="color:#2563eb;font-weight:700">script.google.com</a> แล้ว Login ด้วย Google Account</div></div></div>
+
+        <div class="ds"><div class="sn">2</div><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">สร้างโปรเจกต์ใหม่</div><div style="font-size:12.5px;color:var(--mu)">กด <b>"New Project"</b> → ตั้งชื่อ เช่น <b>PalmDonsak</b></div></div></div>
+
+        <div class="ds"><div class="sn">3</div><div><div style="font-weight:700;font-size:13px;margin-bottom:6px">วางโค้ดนี้ลงในช่อง Code.gs (แทนที่โค้ดเดิมทั้งหมด)</div>
+          <div class="cb" style="font-size:11px;line-height:1.8;user-select:all">const SHEET_NAME = 'PalmData';
+
+function doGet(e) {
+  var action = e.parameter.action;
+  if (action === 'load') {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sh = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
+    var data = sh.getRange(1,1).getValue();
+    var items = data ? JSON.parse(data) : [];
+    return ContentService.createTextOutput(JSON.stringify({items: items}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  return ContentService.createTextOutput(JSON.stringify({ok:false}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var body = JSON.parse(e.postData.contents);
+  if (body.action === 'save') {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sh = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
+    sh.getRange(1,1).setValue(JSON.stringify(body.items));
+    return ContentService.createTextOutput(JSON.stringify({ok:true}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  return ContentService.createTextOutput(JSON.stringify({ok:false}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</div>
+        </div></div>
+
+        <div class="ds"><div class="sn">4</div><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">สร้าง Google Sheet เชื่อมกัน</div><div style="font-size:12.5px;color:var(--mu)">ในเมนู → กด <b>Resources → Spreadsheet</b> (หรือไปที่ <a href="https://sheets.google.com" target="_blank" style="color:#2563eb;font-weight:700">sheets.google.com</a> สร้าง Sheet ใหม่ แล้วกลับมาที่ Apps Script เลือก <b>Services → Google Sheets API</b>)<br><br><b>วิธีเร็วกว่า:</b> ใน Apps Script กด <b>Extensions → Apps Script</b> จาก Google Sheet ที่สร้างไว้แล้ว</div></div></div>
+
+        <div class="ds"><div class="sn">5</div><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">Deploy เป็น Web App</div><div style="font-size:12.5px;color:var(--mu)">กด <b>Deploy → New Deployment</b><br>
+          → Type: <b>Web app</b><br>
+          → Execute as: <b>Me</b><br>
+          → Who has access: <b>Anyone</b><br>
+          → กด <b>Deploy</b> → คัดลอก <b>Web app URL</b></div></div></div>
+
+        <div class="ds"><div class="sn">6</div><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">ใส่ URL ในไฟล์ index.html</div><div style="font-size:12.5px;color:var(--mu)">เปิดไฟล์ index.html ด้วย Notepad / VSCode แล้วหาบรรทัด:</div>
+          <div class="cb" style="font-size:11px">var GAS_URL = 'https://script.google.com/macros/s/AKfycbyBxFRxX1s1E36VbRaAJsd9b6WaY7RvZGZwb4PkxSMBGxnFrRVNlXJt4is-24GqGBfeLA/exec</div>
+          <div style="font-size:12.5px;color:var(--mu);margin-top:5px">แก้เป็น:</div>
+          <div class="cb" style="font-size:11px">var GAS_URL = 'https://script.google.com/macros/s/YOUR_ID/exec';</div>
+          <div class="wb" style="margin-top:7px;font-size:12px">⚠️ แทน YOUR_ID ด้วย ID จริงที่ได้จาก Deploy</div>
+        </div></div>
+
+        <div class="ds" style="border-color:#22963b;background:linear-gradient(135deg,#f0fdf4,#dcfce7)"><div class="sn">✅</div><div>
+          <div style="font-weight:700;font-size:13px;color:#166027;margin-bottom:3px">เสร็จแล้ว!</div>
+          <div style="font-size:12.5px;color:var(--mu)">ข้อมูลจะ sync อัตโนมัติทุกครั้งที่เพิ่ม/แก้ไข/ลบรายการ และโหลดข้อมูลจาก Cloud เมื่อเปิดจากทุกอุปกรณ์</div>
+        </div></div>
       </div>
       <div class="card" style="padding:20px;margin-bottom:14px">
         <div style="font-weight:900;font-size:15px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--bd)">📌 ส่วนที่ 1 — สมัครสมาชิก GitHub</div>
@@ -406,7 +469,7 @@ tbody tr:last-child{border-bottom:none}
       <div class="wb">
         <div style="font-weight:800;font-size:13.5px;margin-bottom:8px">💡 สิ่งสำคัญ</div>
         <div style="font-size:12.5px;line-height:2">
-          📌 ข้อมูลเก็บใน <b>LocalStorage</b> ของเบราวเซอร์แต่ละเครื่อง ไม่ sync ข้ามอุปกรณ์<br>
+          ☁️ ตั้งค่า <b>Google Apps Script</b> (ดูด้านบน) เพื่อ sync ข้อมูลข้ามอุปกรณ์<br>
           📌 รูปใบเสร็จ ควรอัพโหลดซ้ำที่ <a href="https://drive.google.com/drive/folders/1Hc2zBjVdIFrwDLImFrdwUYTYoWrt23CS" target="_blank" style="color:#2563eb;font-weight:700">Google Drive</a> เพื่อสำรองข้อมูล<br>
           📌 อัพเดตไฟล์ใหม่ → อัพโหลดทับที่ GitHub ได้เลย<br>
           📌 GitHub Pages ฟรีตลอด ไม่มีค่าใช้จ่าย
@@ -547,28 +610,134 @@ const SEED = [
 ];
 
 /* =====================================================
+   CLOUD CONFIG — ใส่ URL จาก Google Apps Script ที่นี่
+   ===================================================== */
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbyBxFRxX1s1E36VbRaAJsd9b6WaY7RvZGZwb4PkxSMBGxnFrRVNlXJt4is-24GqGBfeLA/exec';
+
+/* =====================================================
    INIT
    ===================================================== */
 function init() {
-  try {
-    var s = localStorage.getItem('palmv4');
-    items = s ? JSON.parse(s) : SEED.map(function(d){ return Object.assign({},d,{files:d.files||[]}); });
-  } catch(e) {
-    items = SEED.map(function(d){ return Object.assign({},d,{files:[]}); });
-  }
-  if (!localStorage.getItem('palmv4')) save();
-  var ys = getYears();
-  if (ys.length) selY = Math.max.apply(null, ys);
-  chartY = selY; analyzeY = selY;
+  // โหมดกลางคืน (ยังใช้ localStorage ได้ เพราะเป็นแค่ preference)
   if (localStorage.getItem('palmv4_dk') === '1') {
     isDark = true;
     document.documentElement.classList.add('dark');
     document.getElementById('darkTog').classList.add('on');
   }
+
+  if (GAS_URL) {
+    // โหมด Cloud — โหลดข้อมูลจาก Google Apps Script
+    showSyncStatus('loading');
+    cloudLoad();
+  } else {
+    // โหมด Local (ยังไม่ได้ตั้งค่า GAS) — ใช้ localStorage เหมือนเดิม
+    try {
+      var s = localStorage.getItem('palmv4');
+      items = s ? JSON.parse(s) : SEED.map(function(d){ return Object.assign({},d,{files:d.files||[]}); });
+    } catch(e) {
+      items = SEED.map(function(d){ return Object.assign({},d,{files:[]}); });
+    }
+    if (!localStorage.getItem('palmv4')) localSave();
+    afterLoad();
+  }
+}
+
+/* =====================================================
+   CLOUD LOAD / SAVE
+   ===================================================== */
+function cloudLoad() {
+  fetch(GAS_URL + '?action=load', { method: 'GET' })
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (data.items && Array.isArray(data.items)) {
+        items = data.items;
+        // ถ้าเป็นครั้งแรก (ไม่มีข้อมูล) ให้ใช้ SEED
+        if (items.length === 0) {
+          items = SEED.map(function(d){ return Object.assign({},d,{files:d.files||[]}); });
+          cloudSave(true); // บันทึก seed ขึ้น cloud
+        }
+      } else {
+        items = SEED.map(function(d){ return Object.assign({},d,{files:d.files||[]}); });
+        cloudSave(true);
+      }
+      showSyncStatus('ok');
+      afterLoad();
+    })
+    .catch(function(err) {
+      console.warn('Cloud load failed, using local cache:', err);
+      showSyncStatus('error');
+      // Fallback: ใช้ local cache ถ้า cloud ไม่ตอบสนอง
+      try {
+        var s = localStorage.getItem('palmv4_cache');
+        items = s ? JSON.parse(s) : SEED.map(function(d){ return Object.assign({},d,{files:d.files||[]}); });
+      } catch(e) {
+        items = SEED.map(function(d){ return Object.assign({},d,{files:[]}); });
+      }
+      afterLoad();
+    });
+}
+
+function cloudSave(silent) {
+  if (!GAS_URL) { localSave(); return; }
+  // Cache ไว้ใน localStorage เผื่อ offline
+  try { localStorage.setItem('palmv4_cache', JSON.stringify(items)); } catch(e){}
+  showSyncStatus('saving');
+  fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'save', items: items })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (data.ok) {
+      if (!silent) { showSyncStatus('ok'); }
+    } else {
+      showSyncStatus('error');
+    }
+  })
+  .catch(function(err) {
+    console.warn('Cloud save failed:', err);
+    showSyncStatus('error');
+  });
+}
+
+function localSave() {
+  localStorage.setItem('palmv4', JSON.stringify(items));
+}
+
+function save() {
+  if (GAS_URL) {
+    cloudSave(false);
+  } else {
+    localSave();
+  }
+}
+
+/* =====================================================
+   SYNC STATUS INDICATOR
+   ===================================================== */
+function showSyncStatus(state) {
+  var el = document.getElementById('syncStatus');
+  if (!el) return;
+  var map = {
+    loading: { icon: '🔄', text: 'กำลังโหลด...', color: '#c9980f' },
+    saving:  { icon: '☁️', text: 'กำลังบันทึก...', color: '#2563eb' },
+    ok:      { icon: '✅', text: 'ซิงค์แล้ว', color: '#15803d' },
+    error:   { icon: '⚠️', text: 'ออฟไลน์', color: '#b91c1c' },
+    local:   { icon: '💾', text: 'โหมดโลคัล', color: '#658c6a' }
+  };
+  var s = map[state] || map.local;
+  el.innerHTML = '<span style="color:'+s.color+';font-size:11px;font-weight:700">'+s.icon+' '+s.text+'</span>';
+}
+
+function afterLoad() {
+  var ys = getYears();
+  if (ys.length) selY = Math.max.apply(null, ys);
+  chartY = selY; analyzeY = selY;
+  if (!GAS_URL) showSyncStatus('local');
   buildYrs();
   renderAll();
 }
-function save() { localStorage.setItem('palmv4', JSON.stringify(items)); }
 
 /* =====================================================
    UTILS
@@ -1001,7 +1170,7 @@ var SMETA = {
   analyze: ['วิเคราะห์ข้อมูล','สถิติและข้อแนะนำเชิงลึก'],
   charts:  ['กราฟและสถิติ','วิเคราะห์ข้อมูลเชิงภาพ'],
   summary: ['สรุปรายปี','เปรียบเทียบผลประกอบการ'],
-  github:  ['คู่มือขึ้น GitHub','ทำให้ใช้งานออนไลน์ได้']
+  github:  ['Sync & GitHub','ตั้งค่า sync และขึ้น GitHub Pages']
 };
 function goSec(n) {
   document.querySelectorAll('.sec').forEach(function(s){s.classList.remove('on');});
