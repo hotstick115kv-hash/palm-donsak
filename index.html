@@ -376,37 +376,71 @@ tbody tr:last-child{border-bottom:none}
         <div class="ds"><div class="sn">2</div><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">สร้างโปรเจกต์ใหม่</div><div style="font-size:12.5px;color:var(--mu)">กด <b>"New Project"</b> → ตั้งชื่อ เช่น <b>PalmDonsak</b></div></div></div>
 
         <div class="ds"><div class="sn">3</div><div><div style="font-weight:700;font-size:13px;margin-bottom:6px">วางโค้ดนี้ลงในช่อง Code.gs (แทนที่โค้ดเดิมทั้งหมด)</div>
-          <div class="cb" style="font-size:11px;line-height:1.8;user-select:all">const SHEET_NAME = 'PalmData';
+          <div class="cb" style="font-size:11px;line-height:1.8;user-select:all">const SPREADSHEET_ID = '1Y3SJzywuCzjZEn9OwjKK3WkZzMvRpCzKq_gGt8ABrrc';
+const SHEET_NAME = 'PalmData';
+
+function getSheet() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  return ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
+}
 
 function doGet(e) {
-  var action = e.parameter.action;
-  if (action === 'load') {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sh = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
-    var data = sh.getRange(1,1).getValue();
-    var items = data ? JSON.parse(data) : [];
-    return ContentService.createTextOutput(JSON.stringify({items: items}))
+  try {
+    var action = e.parameter.action;
+    if (action === 'load') {
+      var sh = getSheet();
+      var data = sh.getRange(1,1).getValue();
+      var items = data ? JSON.parse(data) : [];
+      return ContentService.createTextOutput(JSON.stringify({items: items}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    return ContentService.createTextOutput(JSON.stringify({ok:false,msg:'unknown action'}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({ok:false,msg:err.toString()}))
       .setMimeType(ContentService.MimeType.JSON);
   }
-  return ContentService.createTextOutput(JSON.stringify({ok:false}))
-    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
-  var body = JSON.parse(e.postData.contents);
-  if (body.action === 'save') {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sh = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
-    sh.getRange(1,1).setValue(JSON.stringify(body.items));
-    return ContentService.createTextOutput(JSON.stringify({ok:true}))
+  try {
+    var body = JSON.parse(e.postData.contents);
+    if (body.action === 'save') {
+      var sh = getSheet();
+      sh.getRange(1,1).setValue(JSON.stringify(body.items));
+      // บันทึกแบบ human-readable ใน Sheet2 ด้วย
+      writeReadableSheet(body.items);
+      return ContentService.createTextOutput(JSON.stringify({ok:true}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    return ContentService.createTextOutput(JSON.stringify({ok:false}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({ok:false,msg:err.toString()}))
       .setMimeType(ContentService.MimeType.JSON);
   }
-  return ContentService.createTextOutput(JSON.stringify({ok:false}))
-    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function writeReadableSheet(items) {
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sh2 = ss.getSheetByName('รายการ') || ss.insertSheet('รายการ');
+    sh2.clearContents();
+    var headers = ['ID','วันที่','ประเภท','หมวดหมู่','รายการ','น้ำหนัก','ราคา/กก.','รับรวม','ค่าแรง','สุทธิ','หมายเหตุ'];
+    sh2.appendRow(headers);
+    items.forEach(function(it) {
+      sh2.appendRow([it.id, it.date, it.type, it.category, it.desc,
+        it.weight||0, it.price||0, it.grossAmount||0, it.labor||0, it.amount||0, it.note||'']);
+    });
+  } catch(e) { /* ไม่ต้อง throw */ }
 }</div>
         </div></div>
 
-        <div class="ds"><div class="sn">4</div><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">สร้าง Google Sheet เชื่อมกัน</div><div style="font-size:12.5px;color:var(--mu)">ในเมนู → กด <b>Resources → Spreadsheet</b> (หรือไปที่ <a href="https://sheets.google.com" target="_blank" style="color:#2563eb;font-weight:700">sheets.google.com</a> สร้าง Sheet ใหม่ แล้วกลับมาที่ Apps Script เลือก <b>Services → Google Sheets API</b>)<br><br><b>วิธีเร็วกว่า:</b> ใน Apps Script กด <b>Extensions → Apps Script</b> จาก Google Sheet ที่สร้างไว้แล้ว</div></div></div>
+        <div class="ds"><div class="sn">4</div><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">📋 Google Sheet ที่ใช้งาน</div><div style="font-size:12.5px;color:var(--mu)">ระบบเชื่อมกับ Spreadsheet นี้โดยตรง:<br><br>
+          <a href="https://docs.google.com/spreadsheets/d/1Y3SJzywuCzjZEn9OwjKK3WkZzMvRpCzKq_gGt8ABrrc/edit" target="_blank" style="color:#2563eb;font-weight:700;word-break:break-all">📊 เปิด Google Sheet →</a>
+          <br><br>ข้อมูลจะถูกบันทึกใน 2 แท็บ:<br>
+          • <b>PalmData</b> — JSON สำหรับระบบ (อย่าแก้ด้วยมือ)<br>
+          • <b>รายการ</b> — ตารางอ่านง่ายสำหรับดูข้อมูล</div></div></div>
 
         <div class="ds"><div class="sn">5</div><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">Deploy เป็น Web App</div><div style="font-size:12.5px;color:var(--mu)">กด <b>Deploy → New Deployment</b><br>
           → Type: <b>Web app</b><br>
@@ -415,10 +449,10 @@ function doPost(e) {
           → กด <b>Deploy</b> → คัดลอก <b>Web app URL</b></div></div></div>
 
         <div class="ds"><div class="sn">6</div><div><div style="font-weight:700;font-size:13px;margin-bottom:3px">ใส่ URL ในไฟล์ index.html</div><div style="font-size:12.5px;color:var(--mu)">เปิดไฟล์ index.html ด้วย Notepad / VSCode แล้วหาบรรทัด:</div>
-          <div class="cb" style="font-size:11px">var GAS_URL = 'https://script.google.com/macros/s/AKfycbyBxFRxX1s1E36VbRaAJsd9b6WaY7RvZGZwb4PkxSMBGxnFrRVNlXJt4is-24GqGBfeLA/exec</div>
-          <div style="font-size:12.5px;color:var(--mu);margin-top:5px">แก้เป็น:</div>
+          <div class="cb" style="font-size:11px">var GAS_URL = 'https://script.google.com/macros/s/AKfycbzpl0pgmFOK-bJDa4xAvJmdKvT2Nqs6TaSbz6_MHHVSrU-tj6KS8UBNm5uJQee-FR6h/exec';</div>
+          <div style="font-size:12.5px;color:var(--mu);margin-top:5px">แก้เป็น URL จริงที่ได้จาก Deploy:</div>
           <div class="cb" style="font-size:11px">var GAS_URL = 'https://script.google.com/macros/s/YOUR_ID/exec';</div>
-          <div class="wb" style="margin-top:7px;font-size:12px">⚠️ แทน YOUR_ID ด้วย ID จริงที่ได้จาก Deploy</div>
+          <div class="wb" style="margin-top:7px;font-size:12px">⚠️ แทน YOUR_ID ด้วย ID จริงที่ได้จาก Deploy แล้วบันทึกไฟล์</div>
         </div></div>
 
         <div class="ds" style="border-color:#22963b;background:linear-gradient(135deg,#f0fdf4,#dcfce7)"><div class="sn">✅</div><div>
@@ -610,9 +644,10 @@ const SEED = [
 ];
 
 /* =====================================================
-   CLOUD CONFIG — ใส่ URL จาก Google Apps Script ที่นี่
+   CLOUD CONFIG — URL จาก Google Apps Script
+   Spreadsheet ID: 1Y3SJzywuCzjZEn9OwjKK3WkZzMvRpCzKq_gGt8ABrrc
    ===================================================== */
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbyBxFRxX1s1E36VbRaAJsd9b6WaY7RvZGZwb4PkxSMBGxnFrRVNlXJt4is-24GqGBfeLA/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzpl0pgmFOK-bJDa4xAvJmdKvT2Nqs6TaSbz6_MHHVSrU-tj6KS8UBNm5uJQee-FR6h/exec'; // ← วาง Web App URL ที่ได้จาก Deploy
 
 /* =====================================================
    INIT
@@ -625,7 +660,7 @@ function init() {
     document.getElementById('darkTog').classList.add('on');
   }
 
-  if (GAS_URL) {
+  if (GAS_URL && GAS_URL !== 'PASTE_YOUR_GAS_URL_HERE') {
     // โหมด Cloud — โหลดข้อมูลจาก Google Apps Script
     showSyncStatus('loading');
     cloudLoad();
@@ -678,7 +713,7 @@ function cloudLoad() {
 }
 
 function cloudSave(silent) {
-  if (!GAS_URL) { localSave(); return; }
+  if (!GAS_URL || GAS_URL === 'PASTE_YOUR_GAS_URL_HERE') { localSave(); return; }
   // Cache ไว้ใน localStorage เผื่อ offline
   try { localStorage.setItem('palmv4_cache', JSON.stringify(items)); } catch(e){}
   showSyncStatus('saving');
@@ -706,7 +741,7 @@ function localSave() {
 }
 
 function save() {
-  if (GAS_URL) {
+  if (GAS_URL && GAS_URL !== 'PASTE_YOUR_GAS_URL_HERE') {
     cloudSave(false);
   } else {
     localSave();
@@ -734,7 +769,7 @@ function afterLoad() {
   var ys = getYears();
   if (ys.length) selY = Math.max.apply(null, ys);
   chartY = selY; analyzeY = selY;
-  if (!GAS_URL) showSyncStatus('local');
+  if (!GAS_URL || GAS_URL === 'PASTE_YOUR_GAS_URL_HERE') showSyncStatus('local');
   buildYrs();
   renderAll();
 }
