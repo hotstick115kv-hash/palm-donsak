@@ -185,6 +185,66 @@ tbody tr:last-child{border-bottom:none}
 <div class="ovl" id="ovl" onclick="closeSb()"></div>
 <div class="toast" id="toast"></div>
 
+<!-- SETUP MODAL -->
+<div id="setupBg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:999;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--card);border-radius:20px;width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.4);animation:mIn .25s ease;overflow:hidden">
+    <div style="background:linear-gradient(135deg,#166027,#22963b);padding:22px 24px 18px">
+      <div style="font-size:28px;margin-bottom:6px">☁️</div>
+      <div style="color:#fff;font-weight:900;font-size:18px">ตั้งค่า Sync ออนไลน์</div>
+      <div style="color:rgba(255,255,255,.75);font-size:12.5px;margin-top:4px">เชื่อมเว็บกับ Google Sheets เพื่อใช้ได้ทุกอุปกรณ์</div>
+    </div>
+    <div style="padding:22px 24px;overflow-y:auto;max-height:80vh">
+      <div id="setupStatusBox" style="display:none;padding:10px 14px;border-radius:10px;margin-bottom:14px;font-size:13px;font-weight:600"></div>
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:11px;font-weight:800;color:var(--mu);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">Web App URL จาก Google Apps Script</label>
+        <input id="setupUrlInput" class="inp" type="url" placeholder="https://script.google.com/macros/s/ABC.../exec" style="font-size:12.5px">
+        <div style="font-size:11px;color:var(--mu);margin-top:5px">วาง URL ที่ได้จาก Deploy ในหน้า script.google.com</div>
+      </div>
+      <div style="display:flex;gap:9px;margin-bottom:16px">
+        <button class="btn btn-o" style="flex:1" onclick="testGasUrl()">🔍 ทดสอบ</button>
+        <button class="btn btn-g" style="flex:2" onclick="saveGasUrl()">💾 บันทึกและเชื่อมต่อ</button>
+      </div>
+      <div style="border-top:1px solid var(--bd);margin-bottom:16px"></div>
+      <div style="font-weight:800;font-size:13px;margin-bottom:12px">📋 ขั้นตอนตั้งค่า (ทำครั้งเดียว)</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="min-width:22px;height:22px;border-radius:50%;background:var(--g1);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">1</div>
+          <div style="font-size:12.5px;color:var(--tx2)">ไปที่ <a href="https://script.google.com" target="_blank" style="color:#2563eb;font-weight:700">script.google.com</a> → Login → กด <b>New Project</b> → ตั้งชื่อ <b>PalmDonsak</b></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="min-width:22px;height:22px;border-radius:50%;background:var(--g1);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">2</div>
+          <div style="font-size:12.5px;color:var(--tx2)"><b>Ctrl+A</b> ลบโค้ดเดิม → วางโค้ดจากไฟล์ <b>Code.gs</b> → กด <b>Ctrl+S</b></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="min-width:22px;height:22px;border-radius:50%;background:var(--g1);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">3</div>
+          <div style="font-size:12.5px;color:var(--tx2)">กด <b>Deploy → New Deployment</b><br>→ ⚙️ เลือก <b>Web app</b><br>→ Execute as: <b>Me</b><br>→ Who has access: <b>Anyone</b><br>→ กด <b>Deploy</b> → อนุญาตสิทธิ์ → คัดลอก URL</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="min-width:22px;height:22px;border-radius:50%;background:var(--g1);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">4</div>
+          <div style="font-size:12.5px;color:var(--tx2)">วาง URL ในช่องด้านบน → กด <b>ทดสอบ</b> → กด <b>บันทึกและเชื่อมต่อ</b></div>
+        </div>
+      </div>
+      <button onclick="skipSetup()" style="width:100%;margin-top:16px;background:none;border:none;color:var(--mu);font-size:12px;cursor:pointer;padding:6px;font-family:inherit">ข้ามก่อน (ใช้งานแบบออฟไลน์)</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE URL MODAL -->
+<div id="changeUrlBg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:400;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--card);border-radius:16px;width:100%;max-width:460px;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.3);animation:mIn .2s ease">
+    <div style="font-weight:900;font-size:16px;margin-bottom:14px">⚙️ ตั้งค่า GAS URL</div>
+    <div id="changeUrlStatus" style="display:none;padding:9px 13px;border-radius:9px;margin-bottom:12px;font-size:12.5px;font-weight:600"></div>
+    <label style="display:block;font-size:10.5px;font-weight:800;color:var(--mu);margin-bottom:4px;text-transform:uppercase">Web App URL</label>
+    <input id="changeUrlInput" class="inp" type="url" placeholder="https://script.google.com/macros/s/.../exec" style="margin-bottom:10px;font-size:12.5px">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1" onclick="closeChangeUrl()">ยกเลิก</button>
+      <button class="btn btn-o" style="flex:1" onclick="testGasUrlChange()">🔍 ทดสอบ</button>
+      <button class="btn btn-g" style="flex:2" onclick="saveGasUrlChange()">💾 บันทึก</button>
+    </div>
+    <button onclick="clearGasUrl()" style="width:100%;margin-top:10px;background:none;border:none;color:#b91c1c;font-size:12px;cursor:pointer;padding:4px;font-family:inherit">🗑️ ล้าง URL (กลับโหมดออฟไลน์)</button>
+  </div>
+</div>
+
 <!-- Viewer -->
 <div class="vbg" id="vbg" onclick="closeViewer()">
   <div class="vi" onclick="event.stopPropagation()">
@@ -210,9 +270,10 @@ tbody tr:last-child{border-bottom:none}
       <span style="color:rgba(255,255,255,.5);font-size:11px">ระบบออนไลน์</span>
       <span id="icount" style="margin-left:auto;color:rgba(255,255,255,.3);font-size:10px">–</span>
     </div>
-    <div id="syncStatus" style="margin-top:7px;padding:5px 10px;background:rgba(255,255,255,.04);border-radius:7px;text-align:center">
+    <div id="syncStatus" style="margin-top:7px;padding:5px 10px;background:rgba(255,255,255,.04);border-radius:7px;text-align:center;cursor:pointer" onclick="openChangeUrl()">
       <span style="color:rgba(255,255,255,.3);font-size:11px">💾 โหมดโลคัล</span>
     </div>
+    <button onclick="openChangeUrl()" style="width:100%;margin-top:5px;padding:5px 8px;border-radius:7px;background:rgba(37,99,235,.25);border:1px solid rgba(59,130,246,.35);color:#90caf9;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit">⚙️ ตั้งค่า Sync URL</button>
   </div>
   <nav class="sb-nav">
     <div class="slbl">เมนูหลัก</div>
@@ -842,10 +903,12 @@ const SEED = [
 ];
 
 /* =====================================================
-   CLOUD CONFIG — URL จาก Google Apps Script
-   Spreadsheet ID: 1Y3SJzywuCzjZEn9OwjKK3WkZzMvRpCzKq_gGt8ABrrc
+   CLOUD CONFIG — อ่านจาก localStorage อัตโนมัติ
+   ผู้ใช้กรอก URL ผ่านหน้าเว็บได้เลย ไม่ต้องแก้โค้ด
    ===================================================== */
-var GAS_URL = 'PASTE_YOUR_GAS_URL_HERE'; // ← วาง Web App URL ที่ได้จาก Deploy
+var GAS_URL = (function(){
+  try { return localStorage.getItem('palmv4_gas_url') || ''; } catch(e){ return ''; }
+})();
 
 /* =====================================================
    INIT
@@ -858,12 +921,12 @@ function init() {
     document.getElementById('darkTog').classList.add('on');
   }
 
-  if (GAS_URL && GAS_URL !== 'PASTE_YOUR_GAS_URL_HERE') {
-    // โหมด Cloud — โหลดข้อมูลจาก Google Apps Script
+  if (GAS_URL) {
+    // โหมด Cloud
     showSyncStatus('loading');
     cloudLoad();
   } else {
-    // โหมด Local (ยังไม่ได้ตั้งค่า GAS) — ใช้ localStorage เหมือนเดิม
+    // โหมด Local — โหลด localStorage แล้วถามว่าต้องการตั้งค่า
     try {
       var s = localStorage.getItem('palmv4');
       items = s ? JSON.parse(s) : SEED.map(function(d){ return Object.assign({},d,{files:d.files||[]}); });
@@ -872,6 +935,10 @@ function init() {
     }
     if (!localStorage.getItem('palmv4')) localSave();
     afterLoad();
+    // แสดง setup modal ถ้าเปิดครั้งแรก (ไม่เคยตั้งค่า)
+    if (!localStorage.getItem('palmv4_setup_skipped')) {
+      setTimeout(openSetupModal, 600);
+    }
   }
 }
 
@@ -914,7 +981,7 @@ function cloudLoad() {
 }
 
 function cloudSave(silent) {
-  if (!GAS_URL || GAS_URL === 'PASTE_YOUR_GAS_URL_HERE') { localSave(); return; }
+  if (!GAS_URL) { localSave(); return; }
   // Cache ไว้ใน localStorage เผื่อ offline
   try { localStorage.setItem('palmv4_cache', JSON.stringify(items)); } catch(e){}
   showSyncStatus('saving');
@@ -942,7 +1009,7 @@ function localSave() {
 }
 
 function save() {
-  if (GAS_URL && GAS_URL !== 'PASTE_YOUR_GAS_URL_HERE') {
+  if (GAS_URL) {
     cloudSave(false);
   } else {
     localSave();
@@ -959,8 +1026,8 @@ function showSyncStatus(state) {
     loading: { icon: '🔄', text: 'กำลังโหลด...', color: '#c9980f' },
     saving:  { icon: '☁️', text: 'กำลังบันทึก...', color: '#2563eb' },
     ok:      { icon: '✅', text: 'ซิงค์แล้ว', color: '#15803d' },
-    error:   { icon: '⚠️', text: 'ออฟไลน์', color: '#b91c1c' },
-    local:   { icon: '💾', text: 'โหมดโลคัล', color: '#658c6a' }
+    error:   { icon: '⚠️', text: 'ออฟไลน์ — กดตั้งค่า', color: '#b91c1c' },
+    local:   { icon: '💾', text: 'โหมดโลคัล — กดตั้งค่า', color: '#658c6a' }
   };
   var s = map[state] || map.local;
   el.innerHTML = '<span style="color:'+s.color+';font-size:11px;font-weight:700">'+s.icon+' '+s.text+'</span>';
@@ -970,7 +1037,7 @@ function afterLoad() {
   var ys = getYears();
   if (ys.length) selY = Math.max.apply(null, ys);
   chartY = selY; analyzeY = selY;
-  if (!GAS_URL || GAS_URL === 'PASTE_YOUR_GAS_URL_HERE') showSyncStatus('local');
+  if (!GAS_URL) showSyncStatus('local');
   loadFertData(null); // โหลดจาก localStorage
   buildYrs();
   renderAll();
@@ -2127,6 +2194,146 @@ function renderFert() {
       '</td>'+
     '</tr>';
   }).join('');
+}
+
+/* =====================================================
+   GAS URL SETUP — กรอก URL ผ่านหน้าเว็บ
+   ===================================================== */
+
+function openSetupModal() {
+  var bg = document.getElementById('setupBg');
+  bg.style.display = 'flex';
+  var inp = document.getElementById('setupUrlInput');
+  if (GAS_URL) inp.value = GAS_URL;
+  setSetupStatus('', '');
+}
+
+function skipSetup() {
+  document.getElementById('setupBg').style.display = 'none';
+  localStorage.setItem('palmv4_setup_skipped', '1');
+  toast('ใช้งานแบบออฟไลน์ — กด "ตั้งค่า Sync URL" ใน sidebar เพื่อเชื่อมต่อภายหลัง', true);
+}
+
+function setSetupStatus(msg, type) {
+  var el = document.getElementById('setupStatusBox');
+  if (!msg) { el.style.display='none'; return; }
+  var colors = {
+    ok:    {bg:'#dcfce7',border:'#86efac',color:'#15803d'},
+    err:   {bg:'#fee2e2',border:'#fca5a5',color:'#b91c1c'},
+    info:  {bg:'#eff6ff',border:'#93c5fd',color:'#1d4ed8'},
+    warn:  {bg:'#fffbeb',border:'#fcd34d',color:'#92400e'}
+  };
+  var c = colors[type] || colors.info;
+  el.style.cssText = 'display:block;padding:10px 14px;border-radius:10px;margin-bottom:14px;font-size:13px;font-weight:600;background:'+c.bg+';border:1.5px solid '+c.border+';color:'+c.color;
+  el.textContent = msg;
+}
+
+function testGasUrl() {
+  var url = (document.getElementById('setupUrlInput').value || '').trim();
+  if (!url || !url.startsWith('http')) { setSetupStatus('❌ URL ไม่ถูกต้อง', 'err'); return; }
+  setSetupStatus('🔄 กำลังทดสอบ...', 'info');
+  fetch(url + '?action=load')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && (Array.isArray(d.items) || d.items !== undefined)) {
+        setSetupStatus('✅ เชื่อมต่อสำเร็จ! พบ ' + (d.items||[]).length + ' รายการใน Sheet', 'ok');
+      } else {
+        setSetupStatus('⚠️ URL ตอบสนองแต่ข้อมูลผิดรูปแบบ — ตรวจสอบ Code.gs', 'warn');
+      }
+    })
+    .catch(function(){ setSetupStatus('❌ เชื่อมต่อไม่ได้ — ตรวจสอบว่า Deploy แล้ว Who has access: Anyone', 'err'); });
+}
+
+function saveGasUrl() {
+  var url = (document.getElementById('setupUrlInput').value || '').trim();
+  if (!url || !url.startsWith('http')) { setSetupStatus('❌ กรุณากรอก URL ที่ถูกต้อง', 'err'); return; }
+  setSetupStatus('🔄 กำลังเชื่อมต่อ...', 'info');
+  fetch(url + '?action=load')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      localStorage.setItem('palmv4_gas_url', url);
+      GAS_URL = url;
+      setSetupStatus('✅ บันทึกสำเร็จ! กำลังโหลดข้อมูล...', 'ok');
+      showSyncStatus('loading');
+      setTimeout(function(){
+        document.getElementById('setupBg').style.display = 'none';
+        cloudLoad();
+      }, 1000);
+    })
+    .catch(function(){
+      setSetupStatus('❌ เชื่อมต่อไม่ได้ — ลองทดสอบก่อนบันทึก', 'err');
+    });
+}
+
+/* Change URL modal (เปิดจาก sidebar) */
+function openChangeUrl() {
+  var bg = document.getElementById('changeUrlBg');
+  bg.style.display = 'flex';
+  var inp = document.getElementById('changeUrlInput');
+  inp.value = GAS_URL || '';
+  setChangeUrlStatus('', '');
+}
+
+function closeChangeUrl() {
+  document.getElementById('changeUrlBg').style.display = 'none';
+}
+
+function setChangeUrlStatus(msg, type) {
+  var el = document.getElementById('changeUrlStatus');
+  if (!msg) { el.style.display='none'; return; }
+  var colors = {
+    ok:  {bg:'#dcfce7',border:'#86efac',color:'#15803d'},
+    err: {bg:'#fee2e2',border:'#fca5a5',color:'#b91c1c'},
+    info:{bg:'#eff6ff',border:'#93c5fd',color:'#1d4ed8'},
+    warn:{bg:'#fffbeb',border:'#fcd34d',color:'#92400e'}
+  };
+  var c = colors[type] || colors.info;
+  el.style.cssText = 'display:block;padding:9px 13px;border-radius:9px;margin-bottom:12px;font-size:12.5px;font-weight:600;background:'+c.bg+';border:1.5px solid '+c.border+';color:'+c.color;
+  el.textContent = msg;
+}
+
+function testGasUrlChange() {
+  var url = (document.getElementById('changeUrlInput').value || '').trim();
+  if (!url || !url.startsWith('http')) { setChangeUrlStatus('❌ URL ไม่ถูกต้อง', 'err'); return; }
+  setChangeUrlStatus('🔄 กำลังทดสอบ...', 'info');
+  fetch(url + '?action=load')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && d.items !== undefined) {
+        setChangeUrlStatus('✅ เชื่อมต่อสำเร็จ! พบ ' + (d.items||[]).length + ' รายการ', 'ok');
+      } else {
+        setChangeUrlStatus('⚠️ ตอบสนองแต่ผิดรูปแบบ', 'warn');
+      }
+    })
+    .catch(function(){ setChangeUrlStatus('❌ เชื่อมต่อไม่ได้', 'err'); });
+}
+
+function saveGasUrlChange() {
+  var url = (document.getElementById('changeUrlInput').value || '').trim();
+  if (!url || !url.startsWith('http')) { setChangeUrlStatus('❌ กรุณากรอก URL ที่ถูกต้อง', 'err'); return; }
+  setChangeUrlStatus('🔄 กำลังบันทึก...', 'info');
+  fetch(url + '?action=load')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      localStorage.setItem('palmv4_gas_url', url);
+      GAS_URL = url;
+      setChangeUrlStatus('✅ บันทึกและเชื่อมต่อสำเร็จ!', 'ok');
+      showSyncStatus('loading');
+      setTimeout(function(){
+        closeChangeUrl();
+        cloudLoad();
+      }, 800);
+    })
+    .catch(function(){ setChangeUrlStatus('❌ เชื่อมต่อไม่ได้ — ตรวจสอบ URL และสิทธิ์', 'err'); });
+}
+
+function clearGasUrl() {
+  if (!confirm('ล้าง URL จะทำให้กลับสู่โหมดออฟไลน์ ยืนยัน?')) return;
+  localStorage.removeItem('palmv4_gas_url');
+  GAS_URL = '';
+  showSyncStatus('local');
+  closeChangeUrl();
+  toast('ล้าง URL แล้ว — กลับสู่โหมดออฟไลน์');
 }
 
 /* =====================================================
